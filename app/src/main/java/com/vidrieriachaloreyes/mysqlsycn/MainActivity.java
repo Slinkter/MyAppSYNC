@@ -12,7 +12,18 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.EditText;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -41,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     public void submitName(View view) {
 
         String name = Name.getText().toString();
-        saveToLocalStorage(name);
+        saveToAppServer(name);
         Name.setText("");
 
 
@@ -52,27 +63,56 @@ public class MainActivity extends AppCompatActivity {
         DbHelper dbHelper = new DbHelper(this);
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         Cursor cursor = dbHelper.readFromLocalDatabase(database);
-        while (cursor.moveToNext()){
+        while (cursor.moveToNext()) {
             String name = cursor.getString(cursor.getColumnIndex(DbContract.NAME));
             int sync_status = cursor.getInt(cursor.getColumnIndex(DbContract.SYNC_STATUS));
-            arrayList.add(new Contact(name,sync_status));
+            arrayList.add(new Contact(name, sync_status));
         }
         adapter.notifyDataSetChanged();
         cursor.close();
         dbHelper.close();
     }
 
-    private void saveToLocalStorage(String name){
-        DbHelper dbHelper = new DbHelper(this);
-        SQLiteDatabase database = dbHelper.getWritableDatabase();
-        if (checkNetworkConnection()){
+    private void saveToAppServer(final String name) {
 
-        }else {
-            dbHelper.saveToLocalDatabase(name,DbContract.SYNC_STATUS_FAILIDE,database);
+        if (checkNetworkConnection()) {
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, DbContract.SERVER_URL,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try {
+                                JSONObject jsonObject = new JSONObject(response);
+                                String Response = jsonObject.getString("response");
+                                if (Response.equals("OK")) {
+                                    saveToLocalStorage(name, DbContract.SYNC_STATUS_OK);
+                                } else {
+                                    saveToLocalStorage(name, DbContract.SYNC_STATUS_FAILIDE);
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            saveToLocalStorage(name, DbContract.SYNC_STATUS_FAILIDE);
+                        }
+                    }) {
+                @Override
+                protected Map<String, String> getParams() throws AuthFailureError {
+                    Map<String, String> params = new HashMap<>();
+                    params.put("name", name);
+                    return params;
+
+                }
+            };
+            MySingleton.getmInstance(MainActivity.this).addToRequestsQue(stringRequest);
+        } else {
+            saveToLocalStorage(name, DbContract.SYNC_STATUS_FAILIDE);
         }
 
-        readFromLocalStorage();
-        dbHelper.close();
+
     }
 
 
@@ -81,5 +121,13 @@ public class MainActivity extends AppCompatActivity {
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         return (networkInfo != null && networkInfo.isConnected());
 
+    }
+
+    private void saveToLocalStorage(String name, int sync) {
+        DbHelper dbHelper = new DbHelper(this);
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+        dbHelper.saveToLocalDatabase(name, sync, database);
+        readFromLocalStorage();
+        dbHelper.close();
     }
 }

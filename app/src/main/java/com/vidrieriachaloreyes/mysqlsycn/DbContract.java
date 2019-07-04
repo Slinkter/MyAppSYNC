@@ -10,5 +10,7 @@ public class DbContract {
     public static final String NAME = "name";
     public static final String SYNC_STATUS = "syncstatus";
 
+    public static final String SERVER_URL = "https://vidrieriachaloreyes.com/php/syncinfo.php";
+
 
 }
