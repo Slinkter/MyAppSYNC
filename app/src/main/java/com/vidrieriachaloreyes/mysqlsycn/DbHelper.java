@@ -46,6 +46,7 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void updateLocalDatabase(String name, int sync_status, SQLiteDatabase database) {
+
         ContentValues contentValues = new ContentValues();
         contentValues.put(DbContract.SYNC_STATUS, sync_status);
         String selection = DbContract.NAME + " LIKE ?";

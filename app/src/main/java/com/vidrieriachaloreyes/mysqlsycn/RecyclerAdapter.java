@@ -31,11 +31,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyVH> 
 
     @Override
     public void onBindViewHolder(@NonNull MyVH myVH, int position) {
+
         myVH.Name.setText(arrayList.get(position).getName());
         int sync_status = arrayList.get(position).getSync_status();
+
         if (sync_status == DbContract.SYNC_STATUS_OK){
             myVH.Sync_Status.setImageResource(R.drawable.img_checked);
-        }else{
+        }else if(sync_status == DbContract.SYNC_STATUS_FAILIDE){
             myVH.Sync_Status.setImageResource(R.drawable.img_sync);
         }
 
