@@ -1,5 +1,6 @@
 package com.vidrieriachaloreyes.mysqlsycn;
 
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,19 +9,20 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
+
+import com.vidrieriachaloreyes.mysqlsycn.Retrofit.ApiCliente;
+import com.vidrieriachaloreyes.mysqlsycn.Retrofit.ApiInterface;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,6 +30,10 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
     RecyclerAdapter adapter;
     ArrayList<Contact> arrayList = new ArrayList<>();
     BroadcastReceiver broadcastReceiver;
+
+    ApiInterface retrofitAPI;
+
+    ProgressDialog progressDialog;
 
 
     @Override
@@ -60,75 +70,62 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Please wait...");
+
     }
 
     public void submitName(View view) {
         String name = Name.getText().toString();
-        saveToAppServer(name);
+        // saveToAppServer(name);
+        saveToAppServer2(name);
         Name.setText("");
     }
 
-    private void saveToAppServer(final String name) {
-
-        if (checkNetworkConnection()) {
-            Log.e("saveToAppServer", " 1 ");
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, DbContract.SERVER_URL,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            try {
-                                JSONObject jsonObject = new JSONObject(response);
-                                String Response = jsonObject.getString("response");
-                                Log.e("saveToAppServer", " : Response = " + Response);
-                                if (Response.equals("OK")) {
-                                    Log.e("saveToAppServer", " 2 ");
-                                    saveToLocalStorage(name, DbContract.SYNC_STATUS_OK);
-                                } else {
-                                    Log.e("saveToAppServer", " 3 ");
-                                    saveToLocalStorage(name, DbContract.SYNC_STATUS_FAILIDE);
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            Log.e("saveToAppServer", " 4 " + error.getMessage());
-                            saveToLocalStorage(name, DbContract.SYNC_STATUS_FAILIDE);
-                        }
-                    })
 
 
+    private void saveToAppServer2(String name) {
+        progressDialog.show();
 
-            {
-                @Override
-                public byte[] getBody() throws AuthFailureError {
-                    return getParams().toString().getBytes();
+        final String insertName = name;
+        retrofitAPI = ApiCliente.getConexion().create(ApiInterface.class);
+        Call<Contact> call = retrofitAPI.insert(insertName);
+        call.enqueue(new Callback<Contact>() {
+            @Override
+            public void onResponse(@NonNull Call<Contact> call, @NonNull Response<Contact> response) {
+
+                progressDialog.dismiss();
+                Log.e("TAG", "" +response);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.e("ok", response.toString());
+
+                    Log.e("message", response.message());
+                    if (response.body() != null) {
+                        Log.e("body", response.body().getMessage() + "");
+                        Log.e("body", response.body().getName() + "");
+                        Log.e("body", response.body().toString() + "");
+                    }
+                    Boolean success = response.body().getSuccess();
+                    if (success) {
+                        Log.e("success", success + "  ");
+                        saveToLocalStorage(insertName, DbContract.SYNC_STATUS_OK);
+                    } else {
+                        Log.e("success", success + "  ");
+                        saveToLocalStorage(insertName, DbContract.SYNC_STATUS_FAILIDE);
+                        Toast.makeText(MainActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 }
+            }
 
-                @Override
-                public String getBodyContentType() {
-                    return "application/json";
-                }
+            @Override
+            public void onFailure(Call<Contact> call, Throwable t) {
+                progressDialog.dismiss();
+                Toast.makeText(MainActivity.this, t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                Log.e("onFailure", " response =  " + t.getMessage());
 
-                @Override
-                protected Map<String, String> getParams() throws AuthFailureError {
-                    Log.e("saveToAppServer", " 5 ");
-                    Map<String, String> params = new HashMap<>();
-                    params.put("name", name);
-                    return params;
-
-                }
-
-            };
-            Log.e("saveToAppServer", " stringRequest = " + stringRequest);
-            MySingleton.getmInstance(MainActivity.this).addToRequestsQue(stringRequest);
-        } else {
-            Log.e("saveToAppServer", " 6 ");
-            saveToLocalStorage(name, DbContract.SYNC_STATUS_FAILIDE);
-        }
+            }
+        });
 
 
     }

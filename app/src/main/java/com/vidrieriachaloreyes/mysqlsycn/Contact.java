@@ -1,21 +1,42 @@
 package com.vidrieriachaloreyes.mysqlsycn;
 
-public class Contact {
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
-    private String Name;
+public class Contact {
+    @Expose
+    @SerializedName("name")
+    private String name;
+    @Expose
+    @SerializedName("status")
     private int Sync_status;
 
+
+    // archivo php -->respuesta  despues del insert mysqli_query($con,$query)
+    @Expose
+    @SerializedName("success")
+    private Boolean success;
+    @Expose
+    @SerializedName("message")
+    private String message;
+
+    //
+
+
+    public Contact() {
+    }
+
     public Contact(String name, int sync_status) {
-        Name = name;
+        this.name = name;
         Sync_status = sync_status;
     }
 
     public String getName() {
-        return Name;
+        return name;
     }
 
     public void setName(String name) {
-        Name = name;
+        this.name = name;
     }
 
     public int getSync_status() {
@@ -24,5 +45,21 @@ public class Contact {
 
     public void setSync_status(int sync_status) {
         Sync_status = sync_status;
+    }
+
+    public Boolean getSuccess() {
+        return success;
+    }
+
+    public void setSuccess(Boolean success) {
+        this.success = success;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }
