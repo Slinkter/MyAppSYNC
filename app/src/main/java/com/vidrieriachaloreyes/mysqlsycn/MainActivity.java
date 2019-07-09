@@ -98,7 +98,21 @@ public class MainActivity extends AppCompatActivity {
                             Log.e("saveToAppServer", " 4 " + error.getMessage());
                             saveToLocalStorage(name, DbContract.SYNC_STATUS_FAILIDE);
                         }
-                    }) {
+                    })
+
+
+
+            {
+                @Override
+                public byte[] getBody() throws AuthFailureError {
+                    return getParams().toString().getBytes();
+                }
+
+                @Override
+                public String getBodyContentType() {
+                    return "application/json";
+                }
+
                 @Override
                 protected Map<String, String> getParams() throws AuthFailureError {
                     Log.e("saveToAppServer", " 5 ");
@@ -107,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
                     return params;
 
                 }
+
             };
             Log.e("saveToAppServer", " stringRequest = " + stringRequest);
             MySingleton.getmInstance(MainActivity.this).addToRequestsQue(stringRequest);
