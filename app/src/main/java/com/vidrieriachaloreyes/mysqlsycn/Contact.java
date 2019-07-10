@@ -11,7 +11,6 @@ public class Contact {
     @SerializedName("status")
     private int Sync_status;
 
-
     // archivo php -->respuesta  despues del insert mysqli_query($con,$query)
     @Expose
     @SerializedName("success")
@@ -19,10 +18,7 @@ public class Contact {
     @Expose
     @SerializedName("message")
     private String message;
-
     //
-
-
     public Contact() {
     }
 

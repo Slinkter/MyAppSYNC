@@ -83,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private void saveToAppServer2(String name) {
         progressDialog.show();
 
@@ -93,27 +92,19 @@ public class MainActivity extends AppCompatActivity {
         call.enqueue(new Callback<Contact>() {
             @Override
             public void onResponse(@NonNull Call<Contact> call, @NonNull Response<Contact> response) {
-
                 progressDialog.dismiss();
-                Log.e("TAG", "" +response);
+                Log.e("onResponse ", " response = " + response);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    Log.e("ok", response.toString());
-
-                    Log.e("message", response.message());
-                    if (response.body() != null) {
-                        Log.e("body", response.body().getMessage() + "");
-                        Log.e("body", response.body().getName() + "");
-                        Log.e("body", response.body().toString() + "");
-                    }
                     Boolean success = response.body().getSuccess();
+                    Log.e("onResponse ", " response = " + response.body().getMessage());
+                    Log.e("onResponse ", " success = " + success);
+                    Log.e("onResponse ", " response = " + response);
+
                     if (success) {
-                        Log.e("success", success + "  ");
                         saveToLocalStorage(insertName, DbContract.SYNC_STATUS_OK);
                     } else {
-                        Log.e("success", success + "  ");
                         saveToLocalStorage(insertName, DbContract.SYNC_STATUS_FAILIDE);
-                        Toast.makeText(MainActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -121,13 +112,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<Contact> call, Throwable t) {
                 progressDialog.dismiss();
-                Toast.makeText(MainActivity.this, t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-                Log.e("onFailure", " response =  " + t.getMessage());
+                //  Toast.makeText(MainActivity.this, t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                Log.e("onFailed", " error --> " + t.getLocalizedMessage());
+                saveToLocalStorage(insertName, DbContract.SYNC_STATUS_FAILIDE);
 
             }
         });
-
-
     }
 
     private void readFromLocalStorage() {

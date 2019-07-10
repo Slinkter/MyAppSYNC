@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiCliente {
 
-    public static final String URL = "http://appretrofitnote.000webhostapp.com/";
+    public static final String URL = "http://appretrofitnote.000webhostapp.com";
     public static Retrofit conexion = null;
 
     public static Retrofit getConexion() {
@@ -16,10 +16,6 @@ public class ApiCliente {
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
-
-
         return conexion;
     }
-
-
 }
