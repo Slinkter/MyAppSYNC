@@ -31,7 +31,6 @@ public class NetworkMonitor extends BroadcastReceiver {
 
     ApiInterface retrofitAPI;
 
-
     @Override
     public void onReceive(final Context context, Intent intent) {
 
@@ -67,17 +66,13 @@ public class NetworkMonitor extends BroadcastReceiver {
 
                 }
             }
-           // dbHelper.close(); funciono en //
+            // dbHelper.close(); funciono en //
         }
     }
-
 
     public boolean checkNetworkConnection(Context context) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         return (networkInfo != null && networkInfo.isConnected());
-
     }
-
-
 }
