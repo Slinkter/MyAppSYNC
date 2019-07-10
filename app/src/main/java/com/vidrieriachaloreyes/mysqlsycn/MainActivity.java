@@ -77,13 +77,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void submitName(View view) {
         String name = Name.getText().toString();
-        // saveToAppServer(name);
-        saveToAppServer2(name);
+        saveToAppServer(name);
         Name.setText("");
     }
 
 
-    private void saveToAppServer2(String name) {
+    private void saveToAppServer(String name) {
         progressDialog.show();
 
         final String insertName = name;

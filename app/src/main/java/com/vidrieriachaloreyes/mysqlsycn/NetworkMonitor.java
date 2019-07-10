@@ -7,12 +7,16 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.vidrieriachaloreyes.mysqlsycn.Retrofit.ApiCliente;
+import com.vidrieriachaloreyes.mysqlsycn.Retrofit.ApiInterface;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,7 +24,14 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+
 public class NetworkMonitor extends BroadcastReceiver {
+
+    ApiInterface retrofitAPI;
+
+
     @Override
     public void onReceive(final Context context, Intent intent) {
 
@@ -32,48 +43,32 @@ public class NetworkMonitor extends BroadcastReceiver {
                 int sync_status = cursor.getInt(cursor.getColumnIndex(DbContract.SYNC_STATUS));
                 if (sync_status == DbContract.SYNC_STATUS_FAILIDE) {
                     final String Name = cursor.getString(cursor.getColumnIndex(DbContract.NAME));
-                    StringRequest stringRequest = new StringRequest(Request.Method.POST, DbContract.SERVER_URL,
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        JSONObject jsonObject = new JSONObject(response);
-                                        String Response = jsonObject.getString("response");
-                                        if (Response.equals("OK")){
-                                            dbHelper.updateLocalDatabase(Name,DbContract.SYNC_STATUS_OK,database);
-                                            context.sendBroadcast(new Intent(DbContract.UI_UPDATE_BROADCAST));
-                                        }
-                                    }catch (JSONException e){
-                                        e.printStackTrace();
-                                    }
-
-
-                                }
-                            },
-                            new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
+                    //
+                    retrofitAPI = ApiCliente.getConexion().create(ApiInterface.class);
+                    Call<Contact> call = retrofitAPI.insert(Name);
+                    call.enqueue(new Callback<Contact>() {
+                        @Override
+                        public void onResponse(@NonNull Call<Contact> call, @NonNull retrofit2.Response<Contact> response) {
+                            Log.e("onResponse ", " response = " + response);
+                            if (response.isSuccessful() && response.body() != null) {
+                                Boolean success = response.body().getSuccess();
+                                if (success) {
+                                    dbHelper.updateLocalDatabase(Name, DbContract.SYNC_STATUS_OK, database);
+                                    context.sendBroadcast(new Intent(DbContract.UI_UPDATE_BROADCAST));
                                 }
                             }
-                    ) {
-                        @Override
-                        protected Map<String, String> getParams() throws AuthFailureError {
-                            Map<String, String> params = new HashMap<>();
-                            params.put("name", Name);
-                            return params;
                         }
-                    };
-                    MySingleton.getmInstance(context).addToRequestsQue(stringRequest);
+
+                        @Override
+                        public void onFailure(Call<Contact> call, Throwable t) {
+                            Log.e("onFailed", " error --> " + t.getLocalizedMessage());
+                        }
+                    });
 
                 }
             }
-
-            dbHelper.close();
-
-
+           // dbHelper.close(); funciono en //
         }
-
     }
 
 
